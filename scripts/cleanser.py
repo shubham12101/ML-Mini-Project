@@ -65,8 +65,27 @@ def createFeatureFile(inputFile, featureFile):
         writer = csv.writer(f)
         writer.writerows(data)
 
+def divideData(originalFile, trainFile, testFile):
+    csvfile =  open(originalFile, 'rb')
+    csvfile1 =  open(trainFile, 'wb+')
+    csvfile2 =  open(testFile, 'wb+')
+    csvreader = csv.reader(csvfile, delimiter=',')
+    csvwriter1 = csv.writer(csvfile1)
+    csvwriter2 = csv.writer(csvfile2)
+    i = 1
+    for row in csvreader:
+        if i % 3 == 0:
+            csvwriter2.writerow(row)
+        else:
+            csvwriter1.writerow(row)
+        i = i + 1
+    csvfile.close()
+    csvfile1.close()
+    csvfile2.close()
+
 if __name__ == '__main__':
-    createFeatureFile('../raw_data/train.csv', '../process_data/feature.csv')
+    divideData('../process_data/feature.csv','../process_data/feature_train.csv','../process_data/feature_test.csv')
+    # createFeatureFile('../raw_data/train.csv', '../process_data/feature.csv')
     # getFeatureDict(3)
     # getFeatureDict(5)
     # print "hello world"
