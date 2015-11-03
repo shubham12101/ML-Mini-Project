@@ -1,8 +1,9 @@
-__author__ = 'shiv'
+__author__ = 'shiv & shabbo'
 
 import pandas as pd
 from pprint import pprint
 import csv
+from datetime import datetime
 
 def listClasses():
     filepath = '../raw_data/train.csv'
@@ -21,14 +22,25 @@ def listClasses():
     # pprint(category_dict)
     return  category_dict
 
+def getListFromDate(str):
+    dObject = datetime.strptime(str,'%Y-%m-%d %H:%M:%S')
+    dateList = []
+    dateList.append(dObject.year)
+    dateList.append(dObject.month)
+    dateList.append(dObject.hour)
+    return dateList
+
 def listAddress():
     filepath = '../raw_data/train.csv'
+    listOfRecords = []
     with open(filepath, 'rb') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         for row in spamreader:
             print ', '.join(row)
 
+
 if __name__ == '__main__':
     # print "hello world"
     # listClasses()
-    listAddress()
+    # listAddress()
+    print getListFromDate('2015-05-13 11:40:00')
