@@ -16,48 +16,49 @@ PROCESS_FILE = 1
 category_dict = {}
 district_dict = {}
 address_dict = {}
+original_dict = {}
+category_list = [
+'ARSON',
+'ASSAULT',
+'BAD CHECKS',
+'BRIBERY',
+'BURGLARY',
+'DISORDERLY CONDUCT',
+'DRIVING UNDER THE INFLUENCE',
+'DRUG/NARCOTIC',
+'DRUNKENNESS',
+'EMBEZZLEMENT',
+'EXTORTION',
+'FAMILY OFFENSES',
+'FORGERY/COUNTERFEITING',
+'FRAUD',
+'GAMBLING',
+'KIDNAPPING',
+'LARCENY/THEFT',
+'LIQUOR LAWS',
+'LOITERING',
+'MISSING PERSON',
+'NON-CRIMINAL',
+'OTHER OFFENSES',
+'PORNOGRAPHY/OBSCENE MAT',
+'PROSTITUTION',
+'RECOVERED VEHICLE',
+'ROBBERY',
+'RUNAWAY',
+'SECONDARY CODES',
+'SEX OFFENSES FORCIBLE',
+'SEX OFFENSES NON FORCIBLE',
+'STOLEN PROPERTY',
+'SUICIDE',
+'SUSPICIOUS OCC',
+'TREA',
+'TRESPASS',
+'VANDALISM',
+'VEHICLE THEFT',
+'WARRANTS',
+'WEAPON LAWS'
+]
 
-original_dict = {
- 'ARSON': 1513,
- 'ASSAULT': 76876,
- 'BAD CHECKS': 406,
- 'BRIBERY': 289,
- 'BURGLARY': 36755,
- 'DISORDERLY CONDUCT': 4320,
- 'DRIVING UNDER THE INFLUENCE': 2268,
- 'DRUG/NARCOTIC': 53971,
- 'DRUNKENNESS': 4280,
- 'EMBEZZLEMENT': 1166,
- 'EXTORTION': 256,
- 'FAMILY OFFENSES': 491,
- 'FORGERY/COUNTERFEITING': 10609,
- 'FRAUD': 16679,
- 'GAMBLING': 146,
- 'KIDNAPPING': 2341,
- 'LARCENY/THEFT': 174900,
- 'LIQUOR LAWS': 1903,
- 'LOITERING': 1225,
- 'MISSING PERSON': 25989,
- 'NON-CRIMINAL': 92304,
- 'OTHER OFFENSES': 126182,
- 'PORNOGRAPHY/OBSCENE MAT': 22,
- 'PROSTITUTION': 7484,
- 'RECOVERED VEHICLE': 3138,
- 'ROBBERY': 23000,
- 'RUNAWAY': 1946,
- 'SECONDARY CODES': 9985,
- 'SEX OFFENSES FORCIBLE': 4388,
- 'SEX OFFENSES NON FORCIBLE': 148,
- 'STOLEN PROPERTY': 4540,
- 'SUICIDE': 508,
- 'SUSPICIOUS OCC': 31414,
- 'TREA': 6,
- 'TRESPASS': 7326,
- 'VANDALISM': 44725,
- 'VEHICLE THEFT': 53781,
- 'WARRANTS': 42214,
- 'WEAPON LAWS': 8555
-}
 
 def createDictionaries():
     global category_dict, address_dict, district_dict
@@ -79,15 +80,25 @@ def createDictionaries():
 #             return True
 #     return False
 
-def getSampleDict(min, ratio):
+def getSampleDict(min, ratio, file_type):
     sample_dict = {}
-    for key in original_dict:
-        if original_dict[key] < min:
-            sample_dict[category_dict[key]] = int(original_dict[key] * ratio)
-        else:
-            sample_dict[category_dict[key]] = min
-    # pprint(sample_dict)
-    return sample_dict
+    # print "The sample dictionary is : "
+    if file_type == RAW_FILE:
+        for key in original_dict:
+            if original_dict[key] < min:
+                sample_dict[category_dict[key]] = int(original_dict[key] * ratio)
+            else:
+                sample_dict[category_dict[key]] = min
+        # pprint(sample_dict)
+        return sample_dict
+    else:
+        for item in category_list:
+            if original_dict[str(category_dict[item])] < min:
+                sample_dict[str(category_dict[item])] = int(original_dict[str(category_dict[item])] * ratio)
+            else:
+                sample_dict[str(category_dict[item])] = min
+        # pprint(sample_dict)
+        return sample_dict
 
 def getDataFromFile(filename):
     data = []
@@ -98,31 +109,35 @@ def getDataFromFile(filename):
             data.append(row)
     return data
 
-def getClassCount():
-    filename = '../raw_data/train.csv'
-    class_dict = {}
+def getClassCount(filename, file_type):
+    global original_dict
     data = getDataFromFile(filename)
     for row in data:
-        category = row[1]
-        if category in class_dict:
-            class_dict[category] += 1
+        if file_type == RAW_FILE:
+            category = row[1]
         else:
-            class_dict[category] = 1
-    pprint(class_dict)
-    avg = 0.0
-    for value in class_dict.values():
-        avg += value
-    avg = avg / len(class_dict.values())
-    print avg
-    sum = 0.0
-    count = 0
-    for key in class_dict.keys():
-        if class_dict[key] < avg:
-            sum = sum + class_dict[key]
-            print key + " " + str(class_dict[key])
-            count += 1
-    print count
-    print sum / count
+            category = row[len(row)-1]
+        if category in original_dict:
+            original_dict[category] += 1
+        else:
+            original_dict[category] = 1
+    # return class_dict
+    # print "The original dictionary is : "
+    # pprint(original_dict)
+    # avg = 0.0
+    # for value in class_dict.values():
+    #     avg += value
+    # avg = avg / len(class_dict.values())
+    # print avg
+    # sum = 0.0
+    # count = 0
+    # for key in class_dict.keys():
+    #     if class_dict[key] < avg:
+    #         sum = sum + class_dict[key]
+    #         print key + " " + str(class_dict[key])
+    #         count += 1
+    # print count
+    # print sum / count
 
 def getFeatureDict(column):
     filepath = '../raw_data/train.csv'
@@ -173,30 +188,40 @@ def getFeatureArrayFromFile(filename):
     return output_data
 
 def createSampleArray(filename, sample_dict, file_type):
-    count_dict = {}
-    for key in sample_dict.keys():
-        count_dict[key] = 0
-
     file_data = getDataFromFile(filename)
     sample_data = []
 
-    for key in category_dict:
-        category_array = getCategoryArray(file_data, key)
-        sample_array = getRandomSample(category_array, sample_dict[category_dict[key]])
-        for row in sample_array:
-            sample_data.append(getFeatureArrayFromString(row))
+    # pprint(file_data)
 
+    for key in category_dict:
+        if file_type == RAW_FILE:
+            category_array = getCategoryArray(file_data, key, file_type)
+            sample_array = getRandomSample(category_array, sample_dict[category_dict[key]])
+            for row in sample_array:
+                sample_data.append(getFeatureArrayFromString(row))
+        else:
+            category_array = getCategoryArray(file_data, category_dict[key], file_type)
+            # pprint(category_array)
+            sample_array = getRandomSample(category_array, sample_dict[str(category_dict[key])])
+            for row in sample_array:
+                sample_data.append(row)
     # print len(sample_data)
     # pprint(sample_data)
     return sample_data
 
 def getCategoryArray(array, category, file_type):
     output = []
+    print category
+    # print file_type
     for row in array:
-        if file_type ==
-        cat = row[1]
-        if cat == category:
-            output.append(row)
+        if file_type == RAW_FILE:
+            cat = row[1]
+            if cat == category:
+                output.append(row)
+        else:
+            cat = row[len(row)-1]
+            if cat == str(category):
+                output.append(row)
     return output
 
 def getRandomSample(array, sample_size):
@@ -237,14 +262,19 @@ def divideData(originalFile, trainFile, testFile):
     csvfile2.close()
 
 if __name__ == '__main__':
-    filepath = '../raw_data/train.csv'
+    filepath = '../process_data/test_features.csv'
     createDictionaries()
-    total_data = getFeatureArrayFromFile(filepath)
-    sample_dict = getSampleDict(1000, 0.75)
-    sample_data = createSampleArray(filepath, sample_dict)
-    writeArrayToFile(sample_data, '../process_data/train_features.csv')
-    test_data = diff(total_data, sample_data)
-    writeArrayToFile(test_data, '../process_data/test_features.csv')
+    getClassCount(filepath, PROCESS_FILE)
+    # total_data = getFeatureArrayFromFile(filepath)
+    sample_dict = getSampleDict(2000, 1, PROCESS_FILE)
+    # pprint(original_dict)
+    # pprint(sample_dict)
+    # pprint(sample_dict)
+    sample_data = createSampleArray(filepath, sample_dict, PROCESS_FILE)
+    # pprint(sample_data)
+    writeArrayToFile(sample_data, '../process_data/test_final_features.csv')
+    # test_data = diff(total_data, sample_data)
+    # writeArrayToFile(test_data, '../process_data/test_features.csv')
     # getTrainDict(1000, 0.75)
     # getClassCount()
     # createFeatureFile('../raw_data/train.csv', '../process_data/feature.csv')
